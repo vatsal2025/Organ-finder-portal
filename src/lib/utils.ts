@@ -76,6 +76,74 @@ export function validateName(name: string): boolean {
   return re.test(name);
 }
 
+// Identity proof validation functions
+export function validateAadhaar(aadhaar: string): boolean {
+  // Aadhaar is a 12-digit number
+  const re = /^\d{12}$/;
+  return re.test(aadhaar.replace(/\D/g, ''));
+}
+
+export function validatePAN(pan: string): boolean {
+  // PAN is a 10-character alphanumeric string in format ABCDE1234F
+  const re = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+  return re.test(pan.toUpperCase());
+}
+
+export function validatePassport(passport: string): boolean {
+  // Indian passport is typically 8 characters - letter followed by 7 digits
+  const re = /^[A-Z]{1}[0-9]{7}$/;
+  return re.test(passport.toUpperCase());
+}
+
+export function validateVoterID(voterId: string): boolean {
+  // Voter ID in India typically has 10 characters
+  const re = /^[A-Z]{3}[0-9]{7}$/;
+  return re.test(voterId.toUpperCase());
+}
+
+export function validateDrivingLicense(license: string): boolean {
+  // Driving license varies by state but typically has 15 alphanumeric characters
+  const re = /^[A-Z0-9]{9,16}$/;
+  return re.test(license.toUpperCase());
+}
+
+// Function to validate identity number based on selected ID proof
+export function validateIdentityNumber(idType: string, idNumber: string): { isValid: boolean; errorMessage: string } {
+  if (!idNumber.trim()) {
+    return { isValid: false, errorMessage: "Identity number is required" };
+  }
+
+  switch (idType) {
+    case 'Aadhaar Card':
+      return {
+        isValid: validateAadhaar(idNumber),
+        errorMessage: "Aadhaar must be a 12-digit number"
+      };
+    case 'PAN Card':
+      return {
+        isValid: validatePAN(idNumber),
+        errorMessage: "PAN must be in format ABCDE1234F"
+      };
+    case 'Passport':
+      return {
+        isValid: validatePassport(idNumber),
+        errorMessage: "Passport must be a letter followed by 7 digits, e.g., A1234567"
+      };
+    case 'Voter ID':
+      return {
+        isValid: validateVoterID(idNumber),
+        errorMessage: "Voter ID must be in format AAA1234567"
+      };
+    case 'Driving License':
+      return {
+        isValid: validateDrivingLicense(idNumber),
+        errorMessage: "Driving license must be 9-16 alphanumeric characters"
+      };
+    default:
+      return { isValid: true, errorMessage: "" };
+  }
+}
+
 export function showSuccessToast(message: string) {
   toast.success(message);
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Heart, User, Mail, Phone, FileText, MapPin, AlertCircle } from 'lucide-react';
@@ -11,6 +10,7 @@ import {
   validateEmail, 
   validatePhone,
   validateName,
+  validateIdentityNumber,
   showErrorToast,
   initialFormData,
   type FormData
@@ -31,20 +31,17 @@ const Index = () => {
   const [availableCities, setAvailableCities] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  // Update registration number when it's generated
   useEffect(() => {
     if (registrationNumber) {
       setFormData(prev => ({ ...prev, registrationNumber }));
     }
   }, [registrationNumber]);
 
-  // Update cities when state changes
   useEffect(() => {
     if (formData.state) {
       const cities = CITIES_BY_STATE[formData.state] || [];
       setAvailableCities(cities);
       
-      // Reset city if current selection is not in the new list of cities
       if (formData.city && !cities.includes(formData.city)) {
         setFormData(prev => ({ ...prev, city: '' }));
       }
@@ -56,7 +53,6 @@ const Index = () => {
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    // Patient details validation
     if (!formData.firstName.trim()) {
       newErrors.firstName = "First name is required";
     } else if (!validateName(formData.firstName)) {
@@ -89,7 +85,15 @@ const Index = () => {
     if (!formData.state) newErrors.state = "State selection is required";
     if (!formData.city) newErrors.city = "City selection is required";
     if (!formData.identityProof) newErrors.identityProof = "Identity proof selection is required";
-    if (!formData.identityNumber.trim()) newErrors.identityNumber = "Identity number is required";
+    
+    if (formData.identityProof) {
+      const identityValidation = validateIdentityNumber(formData.identityProof, formData.identityNumber);
+      if (!identityValidation.isValid) {
+        newErrors.identityNumber = identityValidation.errorMessage;
+      }
+    } else if (!formData.identityNumber.trim()) {
+      newErrors.identityNumber = "Identity number is required";
+    }
     
     if (!formData.emergencyContact.trim()) {
       newErrors.emergencyContact = "Emergency contact is required";
@@ -97,7 +101,6 @@ const Index = () => {
       newErrors.emergencyContact = "Please enter a valid emergency contact number";
     }
     
-    // Witness 1 validation
     if (!formData.witness1.firstName.trim()) {
       newErrors["witness1.firstName"] = "First name is required";
     } else if (!validateName(formData.witness1.firstName)) {
@@ -111,7 +114,18 @@ const Index = () => {
     }
     
     if (!formData.witness1.identityProof) newErrors["witness1.identityProof"] = "Identity proof selection is required";
-    if (!formData.witness1.identityNumber.trim()) newErrors["witness1.identityNumber"] = "Identity number is required";
+    
+    if (formData.witness1.identityProof) {
+      const identityValidation = validateIdentityNumber(
+        formData.witness1.identityProof, 
+        formData.witness1.identityNumber
+      );
+      if (!identityValidation.isValid) {
+        newErrors["witness1.identityNumber"] = identityValidation.errorMessage;
+      }
+    } else if (!formData.witness1.identityNumber.trim()) {
+      newErrors["witness1.identityNumber"] = "Identity number is required";
+    }
     
     if (!formData.witness1.mobile.trim()) {
       newErrors["witness1.mobile"] = "Mobile number is required";
@@ -119,7 +133,6 @@ const Index = () => {
       newErrors["witness1.mobile"] = "Please enter a valid mobile number";
     }
     
-    // Witness 2 validation
     if (!formData.witness2.firstName.trim()) {
       newErrors["witness2.firstName"] = "First name is required";
     } else if (!validateName(formData.witness2.firstName)) {
@@ -133,7 +146,18 @@ const Index = () => {
     }
     
     if (!formData.witness2.identityProof) newErrors["witness2.identityProof"] = "Identity proof selection is required";
-    if (!formData.witness2.identityNumber.trim()) newErrors["witness2.identityNumber"] = "Identity number is required";
+    
+    if (formData.witness2.identityProof) {
+      const identityValidation = validateIdentityNumber(
+        formData.witness2.identityProof, 
+        formData.witness2.identityNumber
+      );
+      if (!identityValidation.isValid) {
+        newErrors["witness2.identityNumber"] = identityValidation.errorMessage;
+      }
+    } else if (!formData.witness2.identityNumber.trim()) {
+      newErrors["witness2.identityNumber"] = "Identity number is required";
+    }
     
     if (!formData.witness2.mobile.trim()) {
       newErrors["witness2.mobile"] = "Mobile number is required";
@@ -202,12 +226,10 @@ const Index = () => {
       const currentOrgans = [...prev.requiredOrgans];
       
       if (checked) {
-        // Add the organ if it's not already in the array
         if (!currentOrgans.includes(organName)) {
           return { ...prev, requiredOrgans: [...currentOrgans, organName] };
         }
       } else {
-        // Remove the organ if it's in the array
         return { 
           ...prev, 
           requiredOrgans: currentOrgans.filter(organ => organ !== organName) 
@@ -222,8 +244,24 @@ const Index = () => {
     e.preventDefault();
     
     if (validateForm()) {
-      // Navigate to confirmation page with form data
       navigate('/confirmation', { state: formData });
+    }
+  };
+
+  const getIdentityPlaceholder = (idType: string): string => {
+    switch (idType) {
+      case 'Aadhaar Card':
+        return "Enter 12-digit Aadhaar number";
+      case 'PAN Card':
+        return "Enter PAN (e.g., ABCDE1234F)";
+      case 'Passport':
+        return "Enter Passport number (e.g., A1234567)";
+      case 'Voter ID':
+        return "Enter Voter ID (e.g., ABC1234567)";
+      case 'Driving License':
+        return "Enter Driving License number";
+      default:
+        return "Enter identity number";
     }
   };
 
@@ -541,7 +579,7 @@ const Index = () => {
                   value={formData.identityNumber}
                   onChange={handleInputChange}
                   className={errors.identityNumber ? "border-red-500" : ""}
-                  placeholder="Enter identity number"
+                  placeholder={getIdentityPlaceholder(formData.identityProof)}
                   required
                 />
                 {errors.identityNumber && (
@@ -578,7 +616,6 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Witness 1 Details */}
           <div className="form-card">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-section col-span-1 md:col-span-2">
@@ -670,7 +707,7 @@ const Index = () => {
                   value={formData.witness1.identityNumber}
                   onChange={handleInputChange}
                   className={errors["witness1.identityNumber"] ? "border-red-500" : ""}
-                  placeholder="Enter identity number"
+                  placeholder={getIdentityPlaceholder(formData.witness1.identityProof)}
                   required
                 />
                 {errors["witness1.identityNumber"] && (
@@ -707,7 +744,6 @@ const Index = () => {
             </div>
           </div>
           
-          {/* Witness 2 Details */}
           <div className="form-card">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="form-section col-span-1 md:col-span-2">
@@ -799,7 +835,7 @@ const Index = () => {
                   value={formData.witness2.identityNumber}
                   onChange={handleInputChange}
                   className={errors["witness2.identityNumber"] ? "border-red-500" : ""}
-                  placeholder="Enter identity number"
+                  placeholder={getIdentityPlaceholder(formData.witness2.identityProof)}
                   required
                 />
                 {errors["witness2.identityNumber"] && (
