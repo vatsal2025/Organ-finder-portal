@@ -108,13 +108,18 @@ const Index = () => {
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof FormData],
-          [child]: value
+      setFormData(prev => {
+        if (parent === 'witness1' || parent === 'witness2') {
+          return {
+            ...prev,
+            [parent]: {
+              ...prev[parent as keyof FormData] as Record<string, unknown>,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -123,13 +128,18 @@ const Index = () => {
   const handleSelectChange = (value: string, name: string) => {
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof FormData],
-          [child]: value
+      setFormData(prev => {
+        if (parent === 'witness1' || parent === 'witness2') {
+          return {
+            ...prev,
+            [parent]: {
+              ...prev[parent as keyof FormData] as Record<string, unknown>,
+              [child]: value
+            }
+          };
         }
-      }));
+        return prev;
+      });
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
