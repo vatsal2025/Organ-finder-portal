@@ -6,9 +6,11 @@ import {
   BLOOD_GROUPS, 
   ORGANS, 
   IDENTITY_PROOFS, 
-  STATES, 
+  INDIAN_STATES,
+  CITIES_BY_STATE,
   validateEmail, 
-  validatePhone, 
+  validatePhone,
+  validateName,
   showErrorToast,
   initialFormData,
   type FormData
@@ -26,6 +28,7 @@ const Index = () => {
   const registrationNumber = useRegistrationNumber();
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [availableCities, setAvailableCities] = useState<string[]>([]);
   const navigate = useNavigate();
 
   // Update registration number when it's generated
@@ -35,12 +38,37 @@ const Index = () => {
     }
   }, [registrationNumber]);
 
+  // Update cities when state changes
+  useEffect(() => {
+    if (formData.state) {
+      const cities = CITIES_BY_STATE[formData.state] || [];
+      setAvailableCities(cities);
+      
+      // Reset city if current selection is not in the new list of cities
+      if (formData.city && !cities.includes(formData.city)) {
+        setFormData(prev => ({ ...prev, city: '' }));
+      }
+    } else {
+      setAvailableCities([]);
+    }
+  }, [formData.state]);
+
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
     // Patient details validation
-    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
-    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = "First name is required";
+    } else if (!validateName(formData.firstName)) {
+      newErrors.firstName = "First name should only contain alphabets";
+    }
+    
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = "Last name is required";
+    } else if (!validateName(formData.lastName)) {
+      newErrors.lastName = "Last name should only contain alphabets";
+    }
+    
     if (!formData.gender) newErrors.gender = "Gender selection is required";
     if (formData.requiredOrgans.length === 0) newErrors.requiredOrgans = "Please select at least one organ";
     if (!formData.bloodGroup) newErrors.bloodGroup = "Blood group is required";
@@ -54,12 +82,12 @@ const Index = () => {
     if (!formData.mobile.trim()) {
       newErrors.mobile = "Mobile number is required";
     } else if (!validatePhone(formData.mobile)) {
-      newErrors.mobile = "Please enter a valid mobile number";
+      newErrors.mobile = "Please enter a valid 10-digit mobile number";
     }
     
     if (!formData.address.trim()) newErrors.address = "Address is required";
-    if (!formData.city.trim()) newErrors.city = "City is required";
     if (!formData.state) newErrors.state = "State selection is required";
+    if (!formData.city) newErrors.city = "City selection is required";
     if (!formData.identityProof) newErrors.identityProof = "Identity proof selection is required";
     if (!formData.identityNumber.trim()) newErrors.identityNumber = "Identity number is required";
     
@@ -70,8 +98,18 @@ const Index = () => {
     }
     
     // Witness 1 validation
-    if (!formData.witness1.firstName.trim()) newErrors["witness1.firstName"] = "First name is required";
-    if (!formData.witness1.lastName.trim()) newErrors["witness1.lastName"] = "Last name is required";
+    if (!formData.witness1.firstName.trim()) {
+      newErrors["witness1.firstName"] = "First name is required";
+    } else if (!validateName(formData.witness1.firstName)) {
+      newErrors["witness1.firstName"] = "First name should only contain alphabets";
+    }
+    
+    if (!formData.witness1.lastName.trim()) {
+      newErrors["witness1.lastName"] = "Last name is required";
+    } else if (!validateName(formData.witness1.lastName)) {
+      newErrors["witness1.lastName"] = "Last name should only contain alphabets";
+    }
+    
     if (!formData.witness1.identityProof) newErrors["witness1.identityProof"] = "Identity proof selection is required";
     if (!formData.witness1.identityNumber.trim()) newErrors["witness1.identityNumber"] = "Identity number is required";
     
@@ -82,8 +120,18 @@ const Index = () => {
     }
     
     // Witness 2 validation
-    if (!formData.witness2.firstName.trim()) newErrors["witness2.firstName"] = "First name is required";
-    if (!formData.witness2.lastName.trim()) newErrors["witness2.lastName"] = "Last name is required";
+    if (!formData.witness2.firstName.trim()) {
+      newErrors["witness2.firstName"] = "First name is required";
+    } else if (!validateName(formData.witness2.firstName)) {
+      newErrors["witness2.firstName"] = "First name should only contain alphabets";
+    }
+    
+    if (!formData.witness2.lastName.trim()) {
+      newErrors["witness2.lastName"] = "Last name is required";
+    } else if (!validateName(formData.witness2.lastName)) {
+      newErrors["witness2.lastName"] = "Last name should only contain alphabets";
+    }
+    
     if (!formData.witness2.identityProof) newErrors["witness2.identityProof"] = "Identity proof selection is required";
     if (!formData.witness2.identityNumber.trim()) newErrors["witness2.identityNumber"] = "Identity number is required";
     
@@ -113,7 +161,7 @@ const Index = () => {
           return {
             ...prev,
             [parent]: {
-              ...prev[parent as keyof FormData] as Record<string, unknown>,
+              ...(prev[parent as keyof FormData] as Record<string, unknown>),
               [child]: value
             }
           };
@@ -133,7 +181,7 @@ const Index = () => {
           return {
             ...prev,
             [parent]: {
-              ...prev[parent as keyof FormData] as Record<string, unknown>,
+              ...(prev[parent as keyof FormData] as Record<string, unknown>),
               [child]: value
             }
           };
@@ -186,7 +234,7 @@ const Index = () => {
           <Heart className="h-14 w-14 mx-auto mb-4 heart-icon" />
           <h1 className="text-4xl font-bold text-gray-900 mb-2">Organ Requirement Form</h1>
           <p className="text-lg text-gray-600">
-            Submit your organ requirement details to connect with hospitals
+            Submit your organ requirement details to connect with hospitals across India
           </p>
         </div>
         
@@ -219,7 +267,7 @@ const Index = () => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   className={errors.firstName ? "border-red-500" : ""}
-                  placeholder="Enter first name"
+                  placeholder="Enter first name (alphabets only)"
                   required
                 />
                 {errors.firstName && (
@@ -240,7 +288,7 @@ const Index = () => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   className={errors.lastName ? "border-red-500" : ""}
-                  placeholder="Enter last name"
+                  placeholder="Enter last name (alphabets only)"
                   required
                 />
                 {errors.lastName && (
@@ -365,7 +413,7 @@ const Index = () => {
                     value={formData.mobile}
                     onChange={handleInputChange}
                     className={`pl-10 ${errors.mobile ? "border-red-500" : ""}`}
-                    placeholder="Enter mobile number"
+                    placeholder="10-digit mobile number"
                     required
                   />
                 </div>
@@ -402,27 +450,6 @@ const Index = () => {
               </div>
               
               <div className="form-section">
-                <Label htmlFor="city" className="label-text">
-                  City <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className={errors.city ? "border-red-500" : ""}
-                  placeholder="Enter city"
-                  required
-                />
-                {errors.city && (
-                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
-                    <AlertCircle className="h-3 w-3" />
-                    {errors.city}
-                  </p>
-                )}
-              </div>
-              
-              <div className="form-section">
                 <Label htmlFor="state" className="label-text">
                   State <span className="text-red-500">*</span>
                 </Label>
@@ -434,7 +461,7 @@ const Index = () => {
                     <SelectValue placeholder="Select State" />
                   </SelectTrigger>
                   <SelectContent>
-                    {STATES.map((state) => (
+                    {INDIAN_STATES.map((state) => (
                       <SelectItem key={state} value={state}>
                         {state}
                       </SelectItem>
@@ -445,6 +472,34 @@ const Index = () => {
                   <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
                     {errors.state}
+                  </p>
+                )}
+              </div>
+              
+              <div className="form-section">
+                <Label htmlFor="city" className="label-text">
+                  City <span className="text-red-500">*</span>
+                </Label>
+                <Select 
+                  value={formData.city} 
+                  onValueChange={(value) => handleSelectChange(value, 'city')}
+                  disabled={!formData.state || availableCities.length === 0}
+                >
+                  <SelectTrigger id="city" className={errors.city ? "border-red-500" : ""}>
+                    <SelectValue placeholder={!formData.state ? "Select state first" : "Select City"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCities.map((city) => (
+                      <SelectItem key={city} value={city}>
+                        {city}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.city && (
+                  <p className="mt-1 text-xs text-red-500 flex items-center gap-1">
+                    <AlertCircle className="h-3 w-3" />
+                    {errors.city}
                   </p>
                 )}
               </div>
@@ -509,7 +564,7 @@ const Index = () => {
                     value={formData.emergencyContact}
                     onChange={handleInputChange}
                     className={`pl-10 ${errors.emergencyContact ? "border-red-500" : ""}`}
-                    placeholder="Enter emergency contact number"
+                    placeholder="10-digit emergency contact number"
                     required
                   />
                 </div>
