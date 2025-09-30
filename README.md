@@ -1,4 +1,6 @@
-# Welcome to your Lovable project
+# Welcome!
+
+# This project is just a prototype presented to relevant healthcare companies on how can they leverage this projecct as an alternative to the current Organ Donation system which is scattered, unorganized andd rigged. This unifies the organ donation system by collecting the appropriate user to the right sources.
 
 ## Project info
 
